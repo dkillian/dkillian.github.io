@@ -1,0 +1,247 @@
+---
+title: "Benefit-cost analysis of a park user fee"
+author: Dan Killian
+date: Wednesday, April 4, 2015
+output: html_document
+---
+
+This exercise is intended to show how R can be used to conduct basic welfare economics using the base plotting system and the mosaic package for calculus operations. The following exercise is an application of the travel cost method of valuing public resource goods such as national parks. Since national parks are either free to use or have a user fee that may not reflect a true market equilibrium, the travel cost method uses the cost of traveling to and entering the park, and the relation of the number of visits in relation to those costs, in order to measure the value of the park. More information about the travel cost method of valuing natural resources can be found [here](http://www.czp.cuni.cz/kos/IES/Literature_ppt04_Parsons.pdf). 
+
+The travel cost method is most often used to value changes to the access to the park, usually through some negative event such as an oil spill or beach closure. In the following exercise, the travel cost method is used to assess the value of imposing a user fee in order to generate revenue and reduce congestion during the summer months. The costs and benefits of the park are as follows: 
+
+Marginal Benefit (MB) = 200 - Q  
+This is the value each visitor enjoys by visiting the park. Note the negative slope indicating decreasing level of enjoyment with additional visits  
+
+Travel Cost (TC) = 20  
+The cost in time, fuel, and vehicle depreciation of visiting the park  
+
+Congestion Costs (CC) = Q - 100  
+The costs imposed upon individuals (in terms of enjoyment) and the environment (in terms of overuse) after the park exceeds some level of visitor traffic  
+
+Marginal Social Cost (MSC) = TC + CC  
+The aggregate cost of visiting the park. Note that travel cost is paid by the user, but the congestion cost is paid both by the user (in terms of reduced enjoyment) and society / the park as a whole.  
+``` {r}
+MB <- function(q) {
+    200 - q
+    }
+TC <- 20
+CC <- function(q) {
+    q - 80
+    }
+MSC = function(TC, CC) {
+    TC + CC
+    }
+```
+How many visits would we expect if there were no entry fee for the park?
+
+If we were only dealing with trip cost, then: 
+
+200 - q = 20  
+q* = 180  
+``` {r}
+plot(MB, 0, 200, ylim=c(4,200), xlim=c(8,200), xlab=("Trips to the park"), ylab="Benefit ($ cost)")
+abline(h=20, lty="dashed")
+points(180,20,pch=16)
+dev.off()
+```
+2. What is the consumer surplus associated with these visits?
+
+Consumer surplus is the area above optimal price and left of the demand schedule.
+
+```{r} 
+plot(MB, 0, 200, ylim=c(4,200), xlim=c(8,200), xlab=("Trips to the park"), ylab="Benefit ($ cost)")
+abline(h=20, lty="dashed")
+points(180,20,pch=16)
+xcord <- c(0, 180, 0)
+ycord <- c(20,20, 200)
+polygon(xcord,ycord,col="gray")
+text(60, 70, "Consumer surplus (no entrance fee)")
+dev.off()
+```
+For linear demand, consumer surplus is 1/2 * x * y 
+
+```{r}
+1/2 * 180 * 180
+```
+
+$16,200
+
+If we were dealing with a nonlinear demand function, we'd need to integrate over q. 
+```{r} 
+require(mosaic)
+F <- antiD(200 - q ~ q)
+F
+F(200) - F(20)
+```
+
+Same result. 
+
+3. What is an efficient fee for the park?
+
+If we are dealing with total social costs, then: 
+
+Congestion costs + trip cost = q - 80
+
+``` {r}
+plot(MB, 0, 200, ylim=c(4,200), xlim=c(8,200), xlab=("Trips to the park"), ylab="Benefit ($ cost)")
+abline(h=20, lty="dashed")
+segments(80,0,200,120)
+dev.off()
+```
+
+Set marginal benefit equal to marginal costs to solve for optimal values
+
+200 - q = q - 80  
+2q = 280  
+q* = 140  
+MB* = 60  
+```{r}
+plot(MB, 0, 200, ylim=c(4,200), xlim=c(8,200), xlab=("Trips to the park"), ylab="Benefit ($ cost)")
+abline(h=20, lty="dashed")
+segments(80,0,200,120)
+points(140,60, pch=16)
+segments(140,0,140,60, lty="dotted")
+segments(0,60,140,60, lty="dotted")
+dev.off()
+```
+
+$60 is the optimal cost, but $20 of that is the trip cost, so the fee imposed by the facility would be $40. 
+
+4.	How many visits would we see with the efficient fee?
+
+140
+
+5.	After a fee is imposed:
+    a.	What is the consumer surplus?
+
+```{r}
+plot(MB, 0, 200, ylim=c(4,200), xlim=c(8,200), xlab=("Trips to the park"), ylab="Benefit ($ cost)")
+abline(h=20, lty="dashed")
+segments(80,0,200,120)
+points(140,60, pch=16)
+segments(140,0,140,60, lty="dotted")
+segments(0,60,140,60, lty="dotted")
+xcord <- c(0,140,0)
+ycord <- c(60, 60, 200)
+polygon(xcord,ycord,col="gray")
+text(45,100, "Consumer surplus (with fee)")
+dev.off()
+
+1/2*140*140
+F(200) - F(60)
+```
+
+$9,800  
+
+    b.	What is the government revenue?
+
+Government revenue is the portion of the original consumer surplus that now goes toward the fee. 
+
+```{r}
+plot(MB, 0, 200, ylim=c(4,200), xlim=c(8,200), xlab=("Trips to the park"), ylab="Benefit ($ cost)")
+abline(h=20, lty="dashed")
+points(140,60, pch=16)
+segments(140,0,140,60, lty="dotted")
+segments(0,60,140,60, lty="dotted")
+xcord <- c(0,140,0)
+ycord <- c(60, 60, 200)
+polygon(xcord,ycord,col="gray")
+text(40, 100, "Consumer surplus")
+xcord2 <- c(0,140,140,0)
+ycord2 <- c(60,60,20,20)
+polygon(xcord2, ycord2, col="light blue")
+segments(80,0,200,120)
+text(50, 40, "Government revenue")
+dev.off()
+40*140
+```
+
+Price $40 * visitors 140 = $5,600
+
+    c.	What is the deadweight loss that has been avoided?
+
+The deadweight loss is the lost efficiency due to imposition of the fee. Graphically, it is the triangle below and left of the demand curve, to the right of the supply (variable costs) curve, and above the fixed cost line.
+```{r}
+plot(MB, 0, 200, ylim=c(4,200), xlim=c(8,200), xlab=("Trips to the park"), ylab="Benefit ($ cost)")
+abline(h=20, lty="dashed")
+points(140,60, pch=16)
+segments(140,0,140,60, lty="dotted")
+segments(0,60,140,60, lty="dotted")
+xcord <- c(0,140,0)
+ycord <- c(60, 60, 200)
+polygon(xcord,ycord,col="gray")
+text(40, 100, "Consumer surplus")
+xcord2 <- c(0,140,140,0)
+ycord2 <- c(60,60,20,20)
+polygon(xcord2, ycord2, col="light blue")
+segments(80,0,200,120)
+text(50, 40, "Government revenue")
+segments(180,20,180,100, lty="dotted")
+xcord3 <- c(180,180,140) 
+ycord3 <- c(20,100,60)
+polygon(xcord3, ycord3, col="darkslategray4")
+text(160, 60, "Loss")
+dev.off()
+1/2*(180-140)*(100-20)
+F(180) - F(140)
+```
+$1,600
+
+In the absence of a fee, visitors in the "Loss" area do not enjoy any surplus (benefit) due to congestion. 
+    
+    d.    What are the avoided congestion costs?
+Congestion costs would be visits after the optimal point of 140, up to the trip cost optimum of 180, bounded by the optimal prices of $60 and $20. 
+
+```{r}
+plot(MB, 0, 200, ylim=c(4,200), xlim=c(8,200), xlab=("Trips to the park"), ylab="Benefit ($ cost)")
+abline(h=20, lty="dashed")
+points(140,60, pch=16)
+segments(140,0,140,60, lty="dotted")
+segments(0,60,140,60, lty="dotted")
+xcord <- c(0,140,0)
+ycord <- c(60, 60, 200)
+polygon(xcord,ycord,col="gray")
+text(40, 100, "Consumer surplus")
+xcord2 <- c(0,140,140,0)
+ycord2 <- c(60,60,20,20)
+polygon(xcord2, ycord2, col="light blue")
+segments(80,0,200,120)
+text(50, 40, "Government revenue")
+segments(180,20,180,100, lty="dotted")
+xcord3 <- c(180,180,140) 
+ycord3 <- c(20,100,60)
+polygon(xcord3, ycord3, col="darkslategray4")
+text(160, 60, "Loss")
+xcord4 <- c(140,180,140) 
+ycord4 <- c(60,20,20)
+polygon(xcord4, ycord4, col="mediumorchid")
+text(151, 30, "Costs")
+dev.off()
+1/2*(180-140)*(60-20)
+```
+$800 in congestion costs from $140-$180 below the demand curve, plus $1,600 from the deadweight loss ($140-$180 above the demand curve). So $2,400 in congestion costs are avoided.    
+
+6.	What are the net benefits from imposing a fee?
+
+Without fee: 
+
+Benefit:            Consumer surplus        $16,200
+
+Cost:               Congestion              $3,200
+
+Net benefit:                                $13,000
+
+With fee:
+
+Benefit:            Consumer surplus        $9,800  
+                    Government revenue      $5,600
+
+Costs:              Congestion              $800
+
+Net benefit                                 $14,600
+
+The net benefit of imposing a fee is $14,600 - $13,000 = $1,600
+
+This is the same as the deadweight loss that was avoided by imposing a fee  
+
+A more real-world application of the travel cost method would use visitor usage data to estimate the demand equation. Demand would be expected to be affected by demographics such as age, income, and education, the season, and the availability of substitute park sites which might see increased traffic as a result of a change in a user fee at the park in question. 
